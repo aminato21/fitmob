@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}{{ activity.name or 'Activity' }} · Runstead{% endblock %}
+{% block content %}
+<header class="page-intro"><p class="eyebrow">{{ activity._date }} · {{ activity.sport_type }}</p><h1>{{ activity.name or 'Run' }}</h1><span class="badge {{ activity.effort_guess }}">{{ activity.session_type_guess|replace('_', ' ') }}</span></header>
+<section class="grid">
+  <div class="card stat-card teal reveal"><strong class="stat-value">{{ activity.distance_km|number }} km</strong><span class="stat-label">Distance</span></div>
+  <div class="card stat-card coral reveal"><strong class="stat-value">{{ activity.moving_time_sec|duration }}</strong><span class="stat-label">Moving time</span></div>
+  <div class="card stat-card violet reveal"><strong class="stat-value">{{ activity.pace_min_per_km or '—' }}</strong><span class="stat-label">Pace /km</span></div>
+  <div class="card stat-card blue reveal"><strong class="stat-value">{{ activity.estimated_walk_break_count if activity.estimated_walk_break_count is not none else '—' }}</strong><span class="stat-label">Estimated walks</span></div>
+</section>
+
+<section class="two-col">
+  <div class="stack">
+    <section class="card reveal"><p class="eyebrow">Beginner interpretation</p><h2>{{ activity.session_type_guess|replace('_', ' ')|title }}</h2><p>{{ activity.beginner_notes }}</p><div class="facts"><span>Longest segment: {{ activity.longest_continuous_run_estimate_sec|duration }}</span><span>Walk time: {{ activity.estimated_total_walk_time_sec|duration }}</span><span>Avg HR: {{ activity.average_heartrate|number(0) }}</span></div></section>
+    {% if splits %}
+    <section class="card reveal"><div class="section-head"><div><p class="eyebrow">Rhythm</p><h2>Visual splits</h2></div><span class="muted">Longer bar = faster split</span></div><div class="split-list">{% for split in splits %}<div class="split-row"><strong>{{ split.number }}</strong><div class="split-track"><div class="split-fill" style="width:{{ split.visual_width }}%"><span>{{ split.pace or '—' }} /km</span></div></div><span class="muted">{{ (split.distance_m / 1000)|number }} km</span></div>{% endfor %}</div></section>
+    {% endif %}
+  </div>
+  <aside class="stack">
+    <section class="card reveal"><div class="section-head"><div><p class="eyebrow">Effort</p><h2>{{ activity.effort_guess|title }}</h2></div><div class="progress-ring" style="--value:{{ effort_percent }}"><span>{{ effort_percent }}%</span></div></div><p class="muted">A data estimate, not a medical intensity score. Your own perceived effort matters more.</p></section>
+    {% if activity.injury_risk_flag %}<div class="notice warn reveal"><strong>Workload flag</strong><p>Keep the next session gentle and take extra rest if sore or unusually tired.</p></div>{% endif %}
+    <section class="card reveal"><h2>Sensor summary</h2><div class="facts"><span>{{ stream.stream_points_count }} points</span><span>GPS {{ 'yes' if stream.has_gps_stream else 'no' }}</span><span>HR {{ 'yes' if stream.has_hr_stream else 'no' }}</span><span>Cadence {{ 'yes' if stream.has_cadence_stream else 'no' }}</span><span>Fastest est. km {{ stream.fastest_1km_estimate_sec|duration }}</span></div></section>
+  </aside>
+</section>
+{% endblock %}
+

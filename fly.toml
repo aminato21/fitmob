@@ -1,0 +1,25 @@
+# fly.toml app configuration file generated for Runstead
+
+app = "runstead"
+primary_region = "bos" # Adjust to your nearest region (e.g. lhr, ams, cdg, bos, sfo)
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  DATABASE_PATH = "/data/strava.db"
+  EXPORT_DIR = "/data/exports"
+  AI_PROVIDER = "gemini"
+
+[[mounts]]
+  source = "runstead_data"
+  destination = "/data"
+  initial_size = "1gb"
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = "suspend" # Suspends container when idle to save resources/costs
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]

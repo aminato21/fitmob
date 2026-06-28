@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: runstead
+    runtime: docker
+    plan: starter # Note: Render persistent disks require the starter/paid tier.
+    envVars:
+      - key: DATABASE_PATH
+        value: /data/strava.db
+      - key: EXPORT_DIR
+        value: /data/exports
+      - key: AI_PROVIDER
+        value: gemini
+      - key: GEMINI_API_KEY
+        sync: false # User can input this securely in the Render UI
+    disk:
+      name: runstead-data
+      mountPath: /data
+      sizeGB: 1

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Insights · Runstead{% endblock %}
+{% block content %}
+<header class="page-intro"><p class="eyebrow">Conservative coach</p><h1>Progress, decoded.</h1><p class="muted">Rules first. Gemini optional. Private routes never leave this computer.</p></header>
+{% if result %}<div class="notice reveal"><strong>{{ 'Gemini analysis complete' if result.provider_used == 'gemini' else 'Deterministic analysis used' }}</strong><p>Provider: {{ result.provider_used }}{% if result.model %} · {{ result.model }}{% endif %}{% if result.fallback_reason %} · {{ result.fallback_reason }}{% endif %}</p></div>{% endif %}
+
+<form action="/analysis/run" method="post" class="card stack shimmer reveal" data-loading-form>
+  <div class="activity-top"><div><p class="eyebrow">{{ run_count }} runs ready</p><h2>Refresh your analysis</h2><p class="muted">{{ sessions_per_week }} session(s)/week · {{ training_goal|replace('_',' ') }} · {{ ai_provider }} / {{ ai_model }}</p></div><span class="badge easy">GPS-safe</span></div>
+  {% if ai_provider == 'gemini' and not key_configured %}<p class="notice warn">Gemini has no key, so the strong deterministic plan will be used.</p>{% endif %}
+  <button class="primary" type="submit" data-loading-text="Analyzing safely…">Build fresh insights</button>
+</form>
+
+{% set shown = result.analysis if result else deterministic %}
+<section class="card hero reveal"><p class="eyebrow">Current level</p><h2>{{ shown.current_level }}</h2><p>{{ shown.walk_break_analysis }}</p></section>
+
+<section class="grid">
+  <div class="card stat-card teal reveal"><strong class="stat-value">{{ consistency.score }}</strong><span class="stat-label">Consistency /100</span></div>
+  <div class="card stat-card coral reveal"><strong class="stat-value">{{ capabilities.estimated_continuous_km|number }} km</strong><span class="stat-label">Est. continuous ability</span></div>
+  <div class="card stat-card violet reveal"><strong class="stat-value">{{ personal_bests.longest_run.distance_km|number if personal_bests.longest_run else '—' }} km</strong><span class="stat-label">Longest completed</span></div>
+  <div class="card stat-card blue reveal"><strong class="stat-value">{{ walk_trend.overall_direction|replace('_',' ')|title }}</strong><span class="stat-label">Walk-break trend</span></div>
+</section>
+
+<section class="two-col">
+  <div class="card chart-card reveal"><p class="eyebrow">Efficiency</p><h2>Pace trend</h2>{% if pace_trend %}<div class="chart-wrap"><canvas id="pace-chart" class="chart"></canvas></div><script id="pace-chart-data" type="application/json">{{ pace_trend|tojson }}</script>{% else %}<div class="chart-empty">No pace history yet.</div>{% endif %}</div>
+  <div class="card chart-card reveal"><p class="eyebrow">Run/walk</p><h2>Estimated breaks</h2>{% if walk_chart %}<div class="chart-wrap"><canvas id="walk-chart" class="chart"></canvas></div><script id="walk-chart-data" type="application/json">{{ walk_chart|tojson }}</script>{% else %}<div class="chart-empty">Streams are needed for walk-break trends.</div>{% endif %}</div>
+</section>
+
+<section class="two-col">
+  <details class="card insight reveal" open><summary>Progress highlights</summary><ul class="clean">{% for item in shown.progress_highlights %}<li>{{ item }}</li>{% endfor %}</ul></details>
+  <details class="card insight reveal" open><summary>Risks and guardrails</summary><ul class="clean">{% for item in shown.risks %}<li>{{ item }}</li>{% endfor %}</ul></details>
+  <details class="card insight reveal"><summary>Main findings</summary><ul class="clean">{% for item in shown.main_findings %}<li>{{ item }}</li>{% endfor %}</ul></details>
+  <details class="card insight reveal"><summary>Milestones</summary><ul class="clean">{% for item in shown.milestone_targets %}<li>{{ item }}</li>{% endfor %}</ul></details>
+</section>
+
+<section class="card reveal"><div class="section-head"><div><p class="eyebrow">Next week</p><h2>{{ shown.next_week.theme }}</h2></div><strong>{{ shown.next_week.weekly_target_km|number }} km target</strong></div><div class="stack">{% for session in shown.next_week.sessions %}<div class="card session-card {{ session.session_type }}"><div class="activity-top"><div><p class="eyebrow">{{ session.day }}</p><h3>{{ session.session_type|replace('_',' ')|title }}</h3></div><span class="session-distance">{{ session.target_distance_km|number }} km</span></div><p>{{ session.walk_strategy }}</p><span class="muted">{{ session.focus }}</span></div>{% endfor %}</div></section>
+
+{% if safe_payload %}<details class="card insight reveal"><summary>Exactly what may be sent to Gemini</summary><pre>{{ safe_payload|tojson(indent=2) }}</pre></details>{% endif %}
+<div class="notice warn reveal">AI guidance is not medical advice and does not diagnose injuries or health conditions.</div>
+{% endblock %}

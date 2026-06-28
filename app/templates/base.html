@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Runstead">
+  <title>{% block title %}Runstead{% endblock %}</title>
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/app.css">
+  <script>
+    document.documentElement.dataset.theme = localStorage.getItem("runstead-theme") || "dark";
+  </script>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <a class="brand" href="/dashboard">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none"><path d="M5 17.5 9 13l3 2 6-8" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 7h3v3" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+        </span>
+        Runstead
+      </a>
+      <div class="top-actions">
+        <button class="icon-button" type="button" data-theme-toggle aria-label="Use light theme">
+          <svg class="theme-moon" viewBox="0 0 24 24" fill="none"><path d="M20 15.2A8 8 0 0 1 8.8 4a8 8 0 1 0 11.2 11.2Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+        </button>
+        <a class="icon-button" href="/settings" aria-label="Settings">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 15.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4Z" stroke="currentColor" stroke-width="2"/><path d="m19.4 15 .1.1a2 2 0 0 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V19a2 2 0 0 1-4 0v-.1a1.6 1.6 0 0 0-2.7-1.1l-.1.1a2 2 0 0 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0-1.1-2.7H3a2 2 0 0 1 0-4h.3a1.6 1.6 0 0 0 1.1-2.7l-.1-.1a2 2 0 0 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 2.7-1.1V3a2 2 0 0 1 4 0v.1a1.6 1.6 0 0 0 2.7 1.1l.1-.1a2 2 0 0 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0 1.1 2.7h.1a2 2 0 0 1 0 4h-.1a1.6 1.6 0 0 0-1.1 2.7Z" stroke="currentColor" stroke-width="1.55" stroke-linecap="round"/></svg>
+        </a>
+      </div>
+    </header>
+    <div class="page-content">
+      {% block content %}{% endblock %}
+    </div>
+  </main>
+
+  <nav class="bottom-nav" aria-label="Main navigation">
+    <a href="/dashboard" class="{{ 'active' if page == 'dashboard' else '' }}">
+      <svg viewBox="0 0 24 24" fill="none"><path d="m3 11 9-8 9 8v9a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1v-9Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg><span>Home</span>
+    </a>
+    <a href="/import" class="{{ 'active' if page == 'import' else '' }}">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M12 3v12m-4-4 4 4 4-4M5 21h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Import</span>
+    </a>
+    <a href="/activities" class="{{ 'active' if page == 'activities' else '' }}">
+      <svg viewBox="0 0 24 24" fill="none"><path d="m5 18 3-7 4 3 3-8 4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Runs</span>
+    </a>
+    <a href="/analysis" class="{{ 'active' if page == 'analysis' else '' }}">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M12 3v4m0 10v4M3 12h4m10 0h4M5.6 5.6l2.8 2.8m7.2 7.2 2.8 2.8m0-12.8-2.8 2.8m-7.2 7.2-2.8 2.8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>Insights</span>
+    </a>
+    <a href="/plan" class="{{ 'active' if page == 'plan' else '' }}">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M7 3v3m10-3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="m8 14 2 2 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Plan</span>
+    </a>
+  </nav>
+
+  <div class="loading-overlay" role="status" aria-live="polite">
+    <div class="card" style="text-align:center"><div class="loader"></div><strong>Building your safe analysis…</strong><p class="muted">This can take a few seconds.</p></div>
+  </div>
+  <script src="/static/app.js" defer></script>
+</body>
+</html>

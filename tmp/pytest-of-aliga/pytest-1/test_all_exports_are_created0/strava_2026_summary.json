@@ -1,0 +1,37 @@
+{
+  "total_runs": 1,
+  "total_distance_km": 3.0,
+  "total_time_sec": 1800.0,
+  "average_pace_sec_per_km": 600.0,
+  "average_pace_min_per_km": "10:00",
+  "longest_run": {
+    "id": 1,
+    "distance_km": 3.0
+  },
+  "best_pace": {
+    "id": 1,
+    "pace_sec_per_km": 600.0,
+    "pace_min_per_km": "10:00"
+  },
+  "weekly_totals": {
+    "2025-12-29": {
+      "runs": 1,
+      "distance_km": 3.0,
+      "moving_time_sec": 1800.0
+    }
+  },
+  "monthly_totals": {
+    "2026-01": {
+      "runs": 1,
+      "distance_km": 3.0,
+      "moving_time_sec": 1800.0
+    }
+  },
+  "progression_trend": {
+    "method": "recent 4 completed/data weeks compared with the preceding 4",
+    "recent_4_week_distance_km": 3.0,
+    "previous_4_week_distance_km": 0,
+    "distance_change_percent": null,
+    "interpretation": "not_enough_data"
+  }
+}

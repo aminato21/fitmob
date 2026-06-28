@@ -1,0 +1,2 @@
+[console_scripts]
+strava-sync = app.cli:main

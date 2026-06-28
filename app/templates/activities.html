@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Runs · Runstead{% endblock %}
+{% block content %}
+<header class="page-intro"><p class="eyebrow">2026 timeline</p><h1>Your runs.</h1><p class="muted">Every session counts—including the ones with walking.</p></header>
+{% if not activities %}
+<div class="card stack reveal"><h2>No runs yet</h2><p class="muted">Import your archive to build your timeline.</p><a class="button" href="/import">Import Strava ZIP</a></div>
+{% else %}
+<div class="stack">
+{% for activity in activities %}
+  <a class="card activity-card reveal" href="/activity/{{ activity.id }}">
+    <div class="activity-top">
+      <div><p class="eyebrow">{{ activity._date }}</p><h3>{{ activity.name or 'Run' }}</h3><span class="muted">{{ activity.day_of_week }} · {{ activity.sport_type }}</span></div>
+      <span class="badge {{ 'warn' if activity.injury_risk_flag else activity.effort_guess }}">{{ activity.session_type_guess|replace('_', ' ') }}</span>
+    </div>
+    <div class="facts"><span><strong>{{ activity.distance_km|number }}</strong> km</span><span>{{ activity.moving_time_sec|duration }}</span><span>{{ activity.pace_min_per_km or '—' }} /km</span><span>{{ activity.estimated_walk_break_count if activity.estimated_walk_break_count is not none else '—' }} walk breaks</span><span>HR {{ activity.average_heartrate|number(0) if activity.average_heartrate is not none else '—' }}</span></div>
+  </a>
+{% endfor %}
+</div>
+{% endif %}
+{% endblock %}
+

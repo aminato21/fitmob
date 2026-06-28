@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Plan · Runstead{% endblock %}
+{% block content %}
+<header class="page-intro"><p class="eyebrow">{{ sessions_per_week }} session(s) per week</p><h1>Your next four weeks.</h1><p class="muted">Goal: {{ training_goal|replace('_',' ')|title }}. Distance targets are ceilings, not tests.</p></header>
+<div class="week-tabs" role="tablist">{% for week in analysis.four_week_plan %}<button class="week-tab {{ 'active' if loop.first else '' }}" type="button" data-week-tab="{{ week.week }}">Week {{ week.week }}</button>{% endfor %}</div>
+{% for week in analysis.four_week_plan %}
+<section class="week-panel stack {{ 'active' if loop.first else '' }}" data-week-panel="{{ week.week }}">
+  <div class="card hero reveal"><div class="activity-top"><div><p class="eyebrow">Week {{ week.week }}</p><h2>{{ week.theme }}</h2></div><strong>{{ week.weekly_target_km|number }} km</strong></div><p>{{ week.key_goal }}</p></div>
+  {% for session in week.sessions %}
+  <article class="card session-card {{ session.session_type }} reveal">
+    <div class="activity-top"><div><p class="eyebrow">{{ session.day }} · {{ session.duration_minutes }} min</p><h2>{{ session.session_type|replace('_',' ')|title }}</h2></div><span class="session-distance">{{ session.target_distance_km|number }} km</span></div>
+    <div class="stack"><div><strong>Warm-up</strong><p class="muted">{{ session.warmup }}</p></div><div><strong>Walk strategy</strong><p>{{ session.walk_strategy }}</p></div><div><strong>Focus</strong><p class="muted">{{ session.focus }}</p></div><div class="notice">{{ session.guidance }}</div></div>
+  </article>
+  {% endfor %}
+</section>
+{% endfor %}
+<section class="card reveal"><p class="eyebrow">Milestones</p><h2>What success looks like</h2><ul class="clean">{% for item in analysis.milestone_targets %}<li>{{ item }}</li>{% endfor %}</ul></section>
+<div class="notice warn reveal">Pain, illness, or unusual fatigue overrides the plan. Walking is always allowed.</div>
+{% endblock %}
+

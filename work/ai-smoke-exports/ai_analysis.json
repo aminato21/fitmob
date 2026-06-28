@@ -1,0 +1,45 @@
+{
+  "current_level": "Not enough running history yet.",
+  "main_findings": [
+    "Import at least one 2026 run to establish a baseline."
+  ],
+  "risks": [
+    "No activity history is available for workload comparison."
+  ],
+  "next_week_plan": [
+    {
+      "day": "Sunday",
+      "session_type": "easy_run_walk",
+      "duration_minutes": 20,
+      "guidance": "Keep it conversational and walk whenever needed."
+    }
+  ],
+  "four_week_plan": [
+    {
+      "week": 1,
+      "sessions": 1,
+      "focus": "Build a comfortable routine; walking breaks are welcome."
+    },
+    {
+      "week": 2,
+      "sessions": 2,
+      "focus": "Build a comfortable routine; walking breaks are welcome."
+    },
+    {
+      "week": 3,
+      "sessions": 2,
+      "focus": "Build a comfortable routine; walking breaks are welcome."
+    },
+    {
+      "week": 4,
+      "sessions": 2,
+      "focus": "Build a comfortable routine; walking breaks are welcome."
+    }
+  ],
+  "what_to_watch_next": [
+    "Comfort, soreness, and recovery after each session."
+  ],
+  "questions_for_user": [
+    "Did the latest session feel easy, moderate, or hard?"
+  ]
+}

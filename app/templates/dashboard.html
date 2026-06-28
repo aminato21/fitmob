@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Dashboard · Runstead{% endblock %}
+{% block content %}
+<section class="hero card reveal">
+  <span class="hero-orb"></span>
+  <p class="eyebrow">Your beginner progression</p>
+  <h1>Steady beats heroic.</h1>
+  <p class="muted">Walking breaks are part of the plan. Build the runner you can repeat.</p>
+  {% if summary.total_runs %}<div class="actions"><a class="button" href="/plan">Open this week’s plan</a><a class="button secondary" href="/analysis">See insights</a></div>{% endif %}
+</section>
+
+{% if summary.total_runs == 0 %}
+<section class="card stack reveal">
+  <p class="eyebrow">Start here</p><h2>Bring in your Strava archive</h2>
+  <p class="muted">Your data stays on this computer. No Strava API subscription is required.</p>
+  <a class="button coral full" href="/import">Import my runs</a>
+</section>
+{% else %}
+<section class="grid" aria-label="Running totals">
+  <div class="card stat-card coral reveal"><strong class="stat-value" data-count="{{ summary.total_runs }}" data-decimals="0">{{ summary.total_runs }}</strong><span class="stat-label">Runs in 2026</span></div>
+  <div class="card stat-card teal reveal"><strong class="stat-value"><span data-count="{{ summary.total_distance_km }}" data-decimals="1">{{ summary.total_distance_km|number }}</span> km</strong><span class="stat-label">Total distance</span></div>
+  <div class="card stat-card violet reveal"><strong class="stat-value">{{ summary.total_time_sec|duration }}</strong><span class="stat-label">Moving time</span></div>
+  <div class="card stat-card blue reveal"><strong class="stat-value">{{ summary.average_pace_min_per_km or '—' }}</strong><span class="stat-label">Average pace /km</span></div>
+</section>
+
+<section class="two-col">
+  <div class="stack">
+    <section class="card chart-card reveal">
+      <div class="section-head"><div><p class="eyebrow">Load</p><h2>Weekly distance</h2></div><span class="badge {{ 'easy' if consistency.score >= 75 else 'moderate' }}">{{ consistency.score }}/100 consistency</span></div>
+      {% if weekly_chart %}<div class="chart-wrap"><canvas id="weekly-chart" class="chart" aria-label="Weekly distance chart"></canvas></div><script type="application/json" id="weekly-chart-data">{{ weekly_chart|tojson }}</script>{% else %}<div class="chart-empty">More runs will unlock the trend chart.</div>{% endif %}
+    </section>
+    <section>
+      <div class="section-head"><h2>Latest runs</h2><a href="/activities">View all</a></div>
+      <div class="stack">
+        {% for activity in latest %}
+        <a class="card activity-card reveal" href="/activity/{{ activity.id }}">
+          <div class="activity-top">
+            <div><h3>{{ activity.name or 'Run' }}</h3><span class="muted">{{ activity._date }} · {{ activity.day_of_week }}</span></div>
+            <span class="badge {{ activity.effort_guess }}">{{ activity.session_type_guess|replace('_', ' ') }}</span>
+          </div>
+          <div class="facts"><span><strong>{{ activity.distance_km|number }}</strong> km</span><span>{{ activity.moving_time_sec|duration }}</span><span>{{ activity.pace_min_per_km or '—' }} /km</span><span>{{ activity.estimated_walk_break_count if activity.estimated_walk_break_count is not none else '—' }} walks</span></div>
+        </a>
+        {% endfor %}
+      </div>
+    </section>
+  </div>
+  <aside class="stack">
+    <section class="card reveal">
+      <p class="eyebrow">Next move</p>
+      <h2>{{ suggestion|replace('_', ' ')|title }}</h2>
+      <p class="muted">Keep it conversational. Walk before fatigue changes your form.</p>
+      <a class="button secondary full" href="/plan">View distance + walk strategy</a>
+    </section>
+    <section class="card reveal">
+      <p class="eyebrow">Trend</p><h2>{{ summary.progression_trend.interpretation|replace('_', ' ')|title }}</h2>
+      <p class="muted">{{ summary.progression_trend.recent_4_week_distance_km|number }} km across the newest four data-bearing weeks.</p>
+    </section>
+    {% if flagged %}<section class="notice warn reveal"><strong>Recovery signal</strong><p>{{ flagged|length }} recent session(s) have a workload flag. Skip speed and choose gentle movement.</p></section>{% endif %}
+  </aside>
+</section>
+{% endif %}
+{% endblock %}
+
