@@ -6,4 +6,10 @@ __pycache__/
 *.db
 *.sqlite*
 exports/
+tmp/
+work/
+*.egg-info/
+*.log
+dist/
+build/
 

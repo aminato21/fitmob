@@ -1,2 +1,0 @@
-﻿activity_id,stream_points_count,avg_stream_heartrate,max_stream_heartrate,min_stream_heartrate,avg_stream_cadence,avg_stream_pace_sec_per_km,fastest_1km_estimate_sec,elevation_gain_from_stream_m,time_in_hr_zones_if_possible,has_gps_stream,has_hr_stream,has_cadence_stream
-1,7,,,,,463.58,,,,True,False,False
