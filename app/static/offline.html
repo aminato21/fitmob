@@ -3,9 +3,14 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#0f172a">
+  <meta name="theme-color" content="#080c0e">
   <title>Runstead · Offline</title>
   <link rel="stylesheet" href="/static/app.css">
+  <script>
+    const initialTheme = localStorage.getItem("runstead-theme") || "dark";
+    document.documentElement.dataset.theme = initialTheme;
+    document.querySelector('meta[name="theme-color"]').content = initialTheme === "light" ? "#eeeae0" : "#080c0e";
+  </script>
 </head>
 <body>
   <main class="shell">
@@ -18,4 +23,3 @@
   </main>
 </body>
 </html>
-

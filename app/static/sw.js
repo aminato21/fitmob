@@ -1,6 +1,5 @@
-const CACHE = "runstead-shell-v1";
+const CACHE = "runstead-shell-v15";
 const SHELL = [
-  "/dashboard",
   "/offline",
   "/static/app.css",
   "/static/app.js",
@@ -27,16 +26,13 @@ self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
   const url = new URL(event.request.url);
   if (url.origin !== self.location.origin) return;
+  const publicAsset = url.pathname.startsWith("/static/") || ["/offline", "/manifest.json", "/sw.js"].includes(url.pathname);
+  if (!publicAsset && event.request.mode !== "navigate") return;
 
   if (event.request.mode === "navigate") {
     event.respondWith(
       fetch(event.request)
-        .then((response) => {
-          const copy = response.clone();
-          caches.open(CACHE).then((cache) => cache.put(event.request, copy));
-          return response;
-        })
-        .catch(() => caches.match(event.request).then((cached) => cached || caches.match("/offline")))
+        .catch(() => caches.match("/offline"))
     );
     return;
   }
@@ -53,4 +49,3 @@ self.addEventListener("fetch", (event) => {
     )
   );
 });
-
