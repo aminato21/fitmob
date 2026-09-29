@@ -1,7 +1,7 @@
 # fly.toml app configuration file generated for Runstead
 
-app = "runstead"
-primary_region = "bos" # Adjust to your nearest region (e.g. lhr, ams, cdg, bos, sfo)
+app = "runstead-aliga"
+primary_region = "lhr"
 
 [build]
   dockerfile = "Dockerfile"
@@ -10,6 +10,7 @@ primary_region = "bos" # Adjust to your nearest region (e.g. lhr, ams, cdg, bos,
   DATABASE_PATH = "/data/strava.db"
   EXPORT_DIR = "/data/exports"
   AI_PROVIDER = "gemini"
+  AUTH_ENABLED = "true"
 
 [[mounts]]
   source = "runstead_data"

@@ -9,14 +9,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy package installation configurations
-COPY pyproject.toml .
+COPY pyproject.toml requirements-runtime.lock ./
 
 # Install dependencies. Using pip install . installs all standard dependencies from pyproject.toml
 # and sets up our application.
 # Note: we copy a placeholder app directory structure first or just copy everything.
 # Let's copy the code
 COPY app/ app/
-RUN pip install --no-cache-dir .
+RUN pip install --no-cache-dir -r requirements-runtime.lock && pip install --no-cache-dir --no-deps .
 
 # Create the data directory for SQLite persistence and exports
 RUN mkdir -p /data
