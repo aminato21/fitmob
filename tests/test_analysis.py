@@ -82,17 +82,17 @@ def test_all_exports_are_created(tmp_path):
     )
     assert result["runs"] == 1
     expected = {
-        "strava_2026_runs.csv",
-        "strava_2026_splits.csv",
-        "strava_2026_laps.csv",
-        "strava_2026_streams_summary.csv",
-        "strava_2026_raw.json",
-        "strava_2026_summary.json",
+        "strava_runs.csv",
+        "strava_splits.csv",
+        "strava_laps.csv",
+        "strava_streams_summary.csv",
+        "strava_raw.json",
+        "strava_summary.json",
     }
     assert {path.name for path in tmp_path.iterdir()} == expected
-    raw = json.loads((tmp_path / "strava_2026_raw.json").read_text("utf-8"))
+    raw = json.loads((tmp_path / "strava_raw.json").read_text("utf-8"))
     assert raw[0]["id"] == 1
-    with (tmp_path / "strava_2026_runs.csv").open(
+    with (tmp_path / "strava_runs.csv").open(
         encoding="utf-8-sig", newline=""
     ) as handle:
         row = next(csv.DictReader(handle))

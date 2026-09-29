@@ -86,10 +86,10 @@ def test_import_zip_combines_csv_and_gpx(tmp_path):
     assert record["detail"]["id"] == 987654321
     assert record["detail"]["average_heartrate"] == 135
     assert record["streams"]["latlng"]["data"][0] == [33.5, -7.6]
-    assert (tmp_path / "exports" / "strava_2026_runs.csv").exists()
-    assert (tmp_path / "exports" / "strava_2026_summary.json").exists()
+    assert (tmp_path / "exports" / "strava_runs.csv").exists()
+    assert (tmp_path / "exports" / "strava_summary.json").exists()
     assert (
-        tmp_path / "exports" / "strava_2026_streams_summary.csv"
+        tmp_path / "exports" / "strava_streams_summary.csv"
     ).exists()
 
 
@@ -139,7 +139,7 @@ def test_csv_only_archive_still_generates_exports(tmp_path):
     result = import_strava_zip(archive_path, settings, Database(settings))
     assert result["activities_imported"] == 1
     assert result["runs"] == 1
-    assert (tmp_path / "exports" / "strava_2026_streams_summary.csv").exists()
+    assert (tmp_path / "exports" / "strava_streams_summary.csv").exists()
 
 
 def test_duplicate_strava_distance_columns_use_display_distance(tmp_path):

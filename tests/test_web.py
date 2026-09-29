@@ -59,7 +59,7 @@ def test_mobile_dashboard_and_all_requested_pages(tmp_path, monkeypatch):
 
         dashboard = client.get("/dashboard")
         assert "Easy evening run" in dashboard.text
-        assert "Steady beats heroic" in dashboard.text
+        assert "Next planned session" in dashboard.text
         assert "/manifest.json" in dashboard.text
         assert "/static/app.js" in dashboard.text
 
@@ -68,9 +68,10 @@ def test_dashboard_analysis_form_uses_deterministic_fallback(
     tmp_path, monkeypatch
 ):
     with configured_client(tmp_path, monkeypatch) as client:
-        response = client.post("/analysis/run")
+        client.get("/analysis")
+        response = client.post("/analysis/run", data={"csrf_token":client.cookies.get("runstead_csrf"), "request_id":"test-analysis-request-001"})
         assert response.status_code == 200
-        assert "Deterministic analysis used" in response.text
+        assert "Review your proposal" in response.text
         assert (tmp_path / "exports" / "ai_safe_payload.json").exists()
 
 

@@ -206,10 +206,11 @@ def test_only_none_and_gemini_are_valid(tmp_path):
         make_settings(tmp_path, ai_provider="ollama")
 
 
-def test_default_model_is_latest_stable_free_flash():
+def test_default_model_is_configured_flash_without_provider_cascade():
     settings = Settings(_env_file=None)
     assert settings.ai_model == "gemini-3.5-flash"
-    assert settings.ai_fallback_model == "gemini-2.5-flash"
+    assert settings.preferred_sessions_per_week == 1
+    assert settings.training_goal == "consistency"
 
 
 def test_model_catalog_lists_generate_content_models(tmp_path):
@@ -246,7 +247,7 @@ def test_model_catalog_lists_generate_content_models(tmp_path):
     assert result["models"][0]["configured"] is True
 
 
-def test_unavailable_default_retries_stable_fallback(tmp_path):
+def test_unavailable_default_uses_local_fallback_without_extra_calls(tmp_path):
     settings = make_settings(
         tmp_path, ai_provider="gemini", gemini_api_key="test-key"
     )
@@ -275,9 +276,9 @@ def test_unavailable_default_retries_stable_fallback(tmp_path):
             settings, database, transport=httpx.MockTransport(handler)
         )
     )
-    assert len(calls) == 2
-    assert result["provider_used"] == "gemini"
-    assert result["model"] == "gemini-2.5-flash"
+    assert len(calls) == 1
+    assert result["provider_used"] == "none"
+    assert result["model"] is None
 
 
 @pytest.mark.parametrize("sessions", [1, 2, 3])
