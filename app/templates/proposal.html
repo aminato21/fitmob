@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Review proposal · Runstead{% endblock %}
+{% block content %}
+<header class="page-intro compact-intro"><p class="eyebrow">{{ proposal.source }}{% if proposal.model %} · {{ proposal.model }}{% endif %}</p><h1>Review your proposal.</h1><p>This replaces unfinished sessions only. Completed history stays saved.</p></header>
+{% if stale %}<div class="notice warn"><strong>Your data or active plan changed.</strong><p>Generate a fresh proposal before accepting.</p><a href="/plan">Back to your saved plan</a></div>{% else %}<form action="/plan/proposals/{{ proposal.id }}/accept" method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="primary">Accept this plan</button></form>{% endif %}
+<a href="/plan">Keep my current plan</a>
+{% if proposal.generation_note %}<div class="notice warn"><strong>Gemini was unavailable.</strong><p>{{ proposal.generation_note }}. This is a local proposal; it has not changed your saved plan.</p><a href="/plan">Retry or generate another local proposal</a></div>{% endif %}
+<section class="card"><h2>{{ proposal.analysis.current_level }}</h2><p>{{ proposal.analysis.walk_break_analysis }}</p></section>
+{% if proposal.adjustments %}<div class="notice warn"><strong>Local checks adjusted the schedule.</strong><ul>{% for adjustment in proposal.adjustments %}<li>{{ adjustment }}</li>{% endfor %}</ul></div>{% endif %}
+{% for week in proposal.analysis.four_week_plan %}<section class="stack"><h2>Stage {{ week.week }} · {{ week.theme }}</h2><p>{{ week.key_goal }}</p>{% for session in week.sessions %}<article class="card"><h3>{{ session.session_type|replace('_',' ')|title }}</h3><p>{{ session.target_distance_km|number }} km ceiling · {{ session.duration_minutes }} min</p><p><strong>Warm-up:</strong> {{ session.warmup }}</p><p>{{ session.walk_strategy }}</p><p>{{ session.focus }}</p><p>{{ session.guidance }}</p></article>{% endfor %}</section>{% endfor %}
+<div class="notice warn">Pain, illness, or unusual fatigue overrides the plan. Walking is allowed.</div>
+{% endblock %}

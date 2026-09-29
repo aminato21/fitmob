@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 {% block title %}{{ activity.name or 'Activity' }} · Runstead{% endblock %}
 {% block content %}
-<header class="page-intro"><p class="eyebrow">{{ activity._date }} · {{ activity.sport_type }}</p><h1>{{ activity.name or 'Run' }}</h1><span class="badge {{ activity.effort_guess }}">{{ activity.session_type_guess|replace('_', ' ') }}</span></header>
-<section class="grid">
+<header class="page-intro activity-hero"><p class="eyebrow">{{ activity._date }} · {{ activity.sport_type }}</p><h1>{{ activity.name or 'Run' }}</h1><span class="badge {{ activity.effort_guess }}">{{ activity.session_type_guess|replace('_', ' ') }}</span></header>
+<section class="grid activity-metric-grid">
   <div class="card stat-card teal reveal"><strong class="stat-value">{{ activity.distance_km|number }} km</strong><span class="stat-label">Distance</span></div>
   <div class="card stat-card coral reveal"><strong class="stat-value">{{ activity.moving_time_sec|duration }}</strong><span class="stat-label">Moving time</span></div>
   <div class="card stat-card violet reveal"><strong class="stat-value">{{ activity.pace_min_per_km or '—' }}</strong><span class="stat-label">Pace /km</span></div>
@@ -11,16 +11,31 @@
 
 <section class="two-col">
   <div class="stack">
-    <section class="card reveal"><p class="eyebrow">Beginner interpretation</p><h2>{{ activity.session_type_guess|replace('_', ' ')|title }}</h2><p>{{ activity.beginner_notes }}</p><div class="facts"><span>Longest segment: {{ activity.longest_continuous_run_estimate_sec|duration }}</span><span>Walk time: {{ activity.estimated_total_walk_time_sec|duration }}</span><span>Avg HR: {{ activity.average_heartrate|number(0) }}</span></div></section>
+    <section class="card interpretation-card reveal"><p class="eyebrow">Coach read</p><h2>{{ activity.session_type_guess|replace('_', ' ')|title }}</h2><p>{{ activity.beginner_notes }}</p><div class="facts"><span>Longest segment: {{ activity.longest_continuous_run_estimate_sec|duration }}</span><span>Walk time: {{ activity.estimated_total_walk_time_sec|duration }}</span><span>Avg HR: {{ activity.average_heartrate|number(0) }}</span>{% if activity.heart_rate_source %}<span>HR source: {{ activity.heart_rate_source|replace('_',' ') }}</span>{% endif %}</div></section>
     {% if splits %}
     <section class="card reveal"><div class="section-head"><div><p class="eyebrow">Rhythm</p><h2>Visual splits</h2></div><span class="muted">Longer bar = faster split</span></div><div class="split-list">{% for split in splits %}<div class="split-row"><strong>{{ split.number }}</strong><div class="split-track"><div class="split-fill" style="width:{{ split.visual_width }}%"><span>{{ split.pace or '—' }} /km</span></div></div><span class="muted">{{ (split.distance_m / 1000)|number }} km</span></div>{% endfor %}</div></section>
     {% endif %}
   </div>
   <aside class="stack">
     <section class="card reveal"><div class="section-head"><div><p class="eyebrow">Effort</p><h2>{{ activity.effort_guess|title }}</h2></div><div class="progress-ring" style="--value:{{ effort_percent }}"><span>{{ effort_percent }}%</span></div></div><p class="muted">A data estimate, not a medical intensity score. Your own perceived effort matters more.</p></section>
-    {% if activity.injury_risk_flag %}<div class="notice warn reveal"><strong>Workload flag</strong><p>Keep the next session gentle and take extra rest if sore or unusually tired.</p></div>{% endif %}
-    <section class="card reveal"><h2>Sensor summary</h2><div class="facts"><span>{{ stream.stream_points_count }} points</span><span>GPS {{ 'yes' if stream.has_gps_stream else 'no' }}</span><span>HR {{ 'yes' if stream.has_hr_stream else 'no' }}</span><span>Cadence {{ 'yes' if stream.has_cadence_stream else 'no' }}</span><span>Fastest est. km {{ stream.fastest_1km_estimate_sec|duration }}</span></div></section>
+    {% if activity.injury_risk_flag %}<div class="notice warn reveal"><strong>Recovery flag</strong><p>Keep the next session gentle. Pain, high soreness, low energy or poor sleep overrides the schedule.</p></div>{% endif %}
+    <section class="card reveal"><h2>Sensor summary</h2><div class="facts"><span>{{ stream.stream_points_count }} points</span><span>GPS {{ 'yes' if stream.has_gps_stream else 'no' }}</span><span>HR {{ 'yes' if activity.average_heartrate is not none else 'no' }}</span><span>Cadence {{ 'yes' if stream.has_cadence_stream else 'no' }}</span><span>Fastest est. km {{ stream.fastest_1km_estimate_sec|duration }}</span>{% if activity.sleep_duration_sec %}<span>Sleep: {{ (activity.sleep_duration_sec / 3600)|number }} h</span>{% endif %}</div></section>
   </aside>
 </section>
-{% endblock %}
 
+{% if request.query_params.get('checkin_saved') %}<div class="notice reveal"><strong>Check-in saved.</strong><p>Your active plan stays saved. A fresh proposal can use this feedback.</p><a href="/plan">Review a refreshed plan</a></div>{% endif %}
+<section class="card stack checkin-card reveal" id="recovery-checkin">
+  <div><p class="eyebrow">Your feedback</p><h2>How did this session feel?</h2><p class="muted">This matters more than a watch score. You can update it later.</p></div>
+  <form action="/activity/{{ activity.id }}/checkin" method="post" class="form-grid" data-loading-form><input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div><label for="perceived_effort">Effort (1 easy · 10 maximal)</label><input id="perceived_effort" name="perceived_effort" type="number" min="1" max="10" value="{{ checkin.perceived_effort if checkin else 4 }}" required></div>
+    <div><label for="soreness">Soreness (0 none · 10 severe)</label><input id="soreness" name="soreness" type="number" min="0" max="10" value="{{ checkin.soreness if checkin else 0 }}" required></div>
+    <div><label for="sleep_quality">Sleep quality (1 poor · 5 good)</label><input id="sleep_quality" name="sleep_quality" type="number" min="1" max="5" value="{{ checkin.sleep_quality if checkin else 3 }}" required></div>
+    <div><label for="energy_level">Energy (1 low · 5 high)</label><input id="energy_level" name="energy_level" type="number" min="1" max="5" value="{{ checkin.energy_level if checkin else 3 }}" required></div>
+    <div><label for="pain">Pain during or after?</label><select id="pain" name="pain"><option value="no" {{ 'selected' if not checkin or not checkin.pain else '' }}>No</option><option value="yes" {{ 'selected' if checkin and checkin.pain else '' }}>Yes</option></select></div>
+    <div><label for="followed_walk_strategy">Followed the walk strategy?</label><select id="followed_walk_strategy" name="followed_walk_strategy"><option value="yes" {{ 'selected' if not checkin or checkin.followed_walk_strategy else '' }}>Yes</option><option value="no" {{ 'selected' if checkin and not checkin.followed_walk_strategy else '' }}>No</option></select></div>
+    <div><label for="unrecorded_walk_minutes">Extra unrecorded walking (minutes)</label><input id="unrecorded_walk_minutes" name="unrecorded_walk_minutes" type="number" min="0" max="300" value="{{ checkin.unrecorded_walk_minutes if checkin else 0 }}"></div>
+    <div class="full-span"><label for="checkin-notes">Short private note</label><textarea id="checkin-notes" name="notes" maxlength="1000" placeholder="Breathing, legs, pain location, why you stopped…">{{ checkin.notes if checkin and checkin.notes else '' }}</textarea></div>
+    <button class="primary full-span" type="submit" data-loading-text="Saving feedback…">Save check-in</button>
+  </form>
+</section>
+{% endblock %}

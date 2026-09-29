@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Coach · Runstead{% endblock %}
+{% block content %}
+<header class="page-intro compact-intro"><p class="eyebrow">Your consistency coach</p><h1>Ask about your next step.</h1><p>Answers use imported runs, your plan, and confirmed sessions. Proposals always need your review.</p></header>
+<div class="notice"><strong>Latest imported run: {{ latest_run_date or 'none yet' }}</strong><p>Runs you have not uploaded are unknown. <a href="/import">Import new data</a>.</p></div>
+<div class="actions"><a class="button secondary" href="/plan">Your plan</a><a class="button secondary" href="/analysis">Progress insights</a><form action="/coach/new" method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="button secondary">New conversation</button></form></div>
+{% if conversations %}<details class="card"><summary>Saved conversations</summary><ul>{% for conversation in conversations %}<li><a href="/coach?conversation_id={{ conversation.id }}">Conversation {{ conversation.id }} · {{ conversation.created_at[:10] }}</a></li>{% endfor %}</ul>{% if conversation_id %}<form action="/coach/{{ conversation_id }}/delete" method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="button secondary">Delete this conversation</button></form>{% endif %}</details>{% endif %}
+<section class="stack coach-thread" aria-label="Conversation">
+{% for message in messages %}<article class="card coach-message {{ message.role }}"><p class="eyebrow">{{ 'You' if message.role == 'user' else 'Coach' }}</p><p class="message-text">{{ message.content }}</p>{% if message.proposal_id %}<a class="button" href="/plan/proposals/{{ message.proposal_id }}">Review proposed plan</a>{% endif %}</article>{% else %}<section class="card"><h2>Try a question</h2><p>“Why does my next session fit my recent runs?”</p><p>“What can you tell from my latest upload?”</p><p>“Propose a plan focused on consistency.”</p></section>{% endfor %}
+</section>
+{% if last_question %}<form action="/coach/{{ conversation_id }}/retry" method="post" data-loading-form><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="request_id" value="{{ request_id }}"><button class="button secondary" data-loading-text="Retrying…">Retry last question</button></form>{% endif %}
+<form action="/coach/message" method="post" class="card stack" data-loading-form><input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <input type="hidden" name="request_id" value="{{ request_id }}">{% if conversation_id %}<input type="hidden" name="conversation_id" value="{{ conversation_id }}">{% endif %}
+  <label for="coach-question">Your question</label><textarea id="coach-question" name="message" maxlength="2000" rows="4" required placeholder="Ask about your next session or progress…"></textarea>
+  <p class="muted">When Gemini is configured, your message and relevant recent conversation are sent to Google with a filtered training summary. Routes, GPS, private activity notes, and secrets are excluded from automatic context. Avoid typing information you do not want to send.</p>
+  {% if ai_provider != 'gemini' or not key_configured %}<p class="notice warn">Gemini is not configured. You can still view your saved plan and request a local proposal.</p>{% endif %}
+  <button class="primary" data-loading-text="Asking coach…">Send question</button>
+</form>
+<form action="/plan/local" method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="request_id" value="{{ request_id }}"><button class="button secondary">Generate local plan for review</button></form>
+<p class="muted">Training information, not a diagnosis. Pain or illness overrides a plan.</p>
+{% endblock %}

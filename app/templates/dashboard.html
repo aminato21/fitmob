@@ -1,63 +1,118 @@
 {% extends "base.html" %}
 {% block title %}Dashboard · Runstead{% endblock %}
 {% block content %}
+<div class="notice reveal"><strong>Latest imported run: {{ latest_run_date or 'none yet' }}</strong><p>Last ZIP upload: {{ latest_upload[:16]|replace('T', ' ') if latest_upload else 'not recorded yet' }}{% if latest_upload %} UTC{% endif %}. Runs not uploaded are unknown.</p><a href="/import">Import new runs</a> · <a href="/plan/matches">Confirm completed sessions</a></div>
+{% if plan_stale %}<div class="notice warn"><strong>Your saved plan may need a refresh.</strong><p>Review a new proposal before replacing it. Completed sessions stay saved.</p><a href="/plan">Review your plan</a></div>{% endif %}
+{% if summary.total_runs == 0 %}
 <section class="hero card reveal">
   <span class="hero-orb"></span>
-  <p class="eyebrow">Your beginner progression</p>
-  <h1>Steady beats heroic.</h1>
-  <p class="muted">Walking breaks are part of the plan. Build the runner you can repeat.</p>
-  {% if summary.total_runs %}<div class="actions"><a class="button" href="/plan">Open this week’s plan</a><a class="button secondary" href="/analysis">See insights</a></div>{% endif %}
-</section>
-
-{% if summary.total_runs == 0 %}
-<section class="card stack reveal">
-  <p class="eyebrow">Start here</p><h2>Bring in your Strava archive</h2>
-  <p class="muted">Your data stays on this computer. No Strava API subscription is required.</p>
+  <p class="eyebrow">Your first step</p>
+  <h1>Bring your running story in.</h1>
+  <p class="hero-copy">Import your Strava archive once. Runstead turns it into a private beginner plan.</p>
   <a class="button coral full" href="/import">Import my runs</a>
 </section>
+{% if dashboard_session %}<section class="card"><p class="eyebrow">Up next · Session {{ dashboard_session.position }}</p><h2>{{ dashboard_session.session_type|replace('_',' ')|title }}</h2><p>{{ dashboard_session.target_distance_km|number }} km ceiling · {{ dashboard_session.duration_minutes }} min</p><p>{{ dashboard_session.walk_strategy }}</p><p>{{ dashboard_session.guidance }}</p><a href="/plan#next-session">Open full session</a> · <a href="/coach">Ask your coach</a></section>{% endif %}
 {% else %}
-<section class="grid" aria-label="Running totals">
-  <div class="card stat-card coral reveal"><strong class="stat-value" data-count="{{ summary.total_runs }}" data-decimals="0">{{ summary.total_runs }}</strong><span class="stat-label">Runs in 2026</span></div>
-  <div class="card stat-card teal reveal"><strong class="stat-value"><span data-count="{{ summary.total_distance_km }}" data-decimals="1">{{ summary.total_distance_km|number }}</span> km</strong><span class="stat-label">Total distance</span></div>
-  <div class="card stat-card violet reveal"><strong class="stat-value">{{ summary.total_time_sec|duration }}</strong><span class="stat-label">Moving time</span></div>
-  <div class="card stat-card blue reveal"><strong class="stat-value">{{ summary.average_pace_min_per_km or '—' }}</strong><span class="stat-label">Average pace /km</span></div>
+<section class="card session-command reveal">
+  {% if dashboard_session %}
+  <div class="session-command-head">
+    <div>
+      <div class="session-command-status"><span class="pulse-dot"></span><span>Up next · Session {{ dashboard_session.position }}</span><small>{{ 'Gemini plan' if dashboard_plan_source == 'gemini' else 'Runstead safe plan' }}</small></div>
+      <p class="eyebrow">Next planned session</p>
+      <h1>{{ dashboard_session.session_type|replace('_', ' ')|title }}</h1>
+    </div>
+    <div class="session-command-distance"><strong>{{ dashboard_session.target_distance_km|number }}</strong><span>km</span><small>ceiling</small></div>
+  </div>
+  <div class="session-command-metrics">
+    <div><small>Time</small><strong>{{ dashboard_session.duration_minutes }} min</strong></div>
+    <div><small>Effort</small><strong>Comfortable</strong></div>
+    <div><small>Walks</small><strong>Planned</strong></div>
+  </div>
+  <div class="session-command-walk">
+    <span class="walk-mark" aria-hidden="true">↟</span>
+    <div><small>Walk Strategy</small><p>{{ dashboard_session.walk_strategy }}</p></div>
+  </div>
+  <p class="session-command-focus">{{ dashboard_session.focus }}</p>
+  <p class="muted">{{ dashboard_session.guidance }}</p>
+  <div class="session-command-actions"><a class="button" href="/plan#next-session">Open Full Session</a><a href="/coach">Ask Your Coach <span aria-hidden="true">→</span></a></div>
+  {% else %}
+  <div class="session-command-status"><span class="pulse-dot"></span><span>Recommended Next</span></div>
+  <p class="eyebrow">Next planned session</p>
+  <h1>Your saved sequence is complete.</h1>
+  <p>Review a fresh plan when you are ready. Your completed sessions remain in history.</p>
+  <a class="button full" href="/plan">Open Your Plan</a>
+  {% endif %}
 </section>
 
-<section class="two-col">
-  <div class="stack">
-    <section class="card chart-card reveal">
-      <div class="section-head"><div><p class="eyebrow">Load</p><h2>Weekly distance</h2></div><span class="badge {{ 'easy' if consistency.score >= 75 else 'moderate' }}">{{ consistency.score }}/100 consistency</span></div>
-      {% if weekly_chart %}<div class="chart-wrap"><canvas id="weekly-chart" class="chart" aria-label="Weekly distance chart"></canvas></div><script type="application/json" id="weekly-chart-data">{{ weekly_chart|tojson }}</script>{% else %}<div class="chart-empty">More runs will unlock the trend chart.</div>{% endif %}
-    </section>
-    <section>
-      <div class="section-head"><h2>Latest runs</h2><a href="/activities">View all</a></div>
-      <div class="stack">
-        {% for activity in latest %}
-        <a class="card activity-card reveal" href="/activity/{{ activity.id }}">
-          <div class="activity-top">
-            <div><h3>{{ activity.name or 'Run' }}</h3><span class="muted">{{ activity._date }} · {{ activity.day_of_week }}</span></div>
-            <span class="badge {{ activity.effort_guess }}">{{ activity.session_type_guess|replace('_', ' ') }}</span>
-          </div>
-          <div class="facts"><span><strong>{{ activity.distance_km|number }}</strong> km</span><span>{{ activity.moving_time_sec|duration }}</span><span>{{ activity.pace_min_per_km or '—' }} /km</span><span>{{ activity.estimated_walk_break_count if activity.estimated_walk_break_count is not none else '—' }} walks</span></div>
-        </a>
-        {% endfor %}
-      </div>
-    </section>
+<section class="card week-pulse reveal">
+  <div class="week-pulse-head">
+    <div><p class="eyebrow">This week · {{ week_snapshot.date_range }}</p><h2>Your Repeatable Rhythm.</h2></div>
+    <span class="week-status {{ week_snapshot.status_class }}">{{ week_snapshot.status }}</span>
   </div>
-  <aside class="stack">
-    <section class="card reveal">
-      <p class="eyebrow">Next move</p>
-      <h2>{{ suggestion|replace('_', ' ')|title }}</h2>
-      <p class="muted">Keep it conversational. Walk before fatigue changes your form.</p>
-      <a class="button secondary full" href="/plan">View distance + walk strategy</a>
-    </section>
-    <section class="card reveal">
-      <p class="eyebrow">Trend</p><h2>{{ summary.progression_trend.interpretation|replace('_', ' ')|title }}</h2>
-      <p class="muted">{{ summary.progression_trend.recent_4_week_distance_km|number }} km across the newest four data-bearing weeks.</p>
-    </section>
-    {% if flagged %}<section class="notice warn reveal"><strong>Recovery signal</strong><p>{{ flagged|length }} recent session(s) have a workload flag. Skip speed and choose gentle movement.</p></section>{% endif %}
-  </aside>
+  <div class="week-pulse-body">
+    <div class="week-session-count">
+      <strong>{{ week_snapshot.sessions }}<small>/{{ week_snapshot.sessions_target }}</small></strong>
+      <span>confirmed sessions</span>
+      <progress max="100" value="{{ week_snapshot.progress_percent }}" aria-label="{{ week_snapshot.sessions }} of {{ week_snapshot.sessions_target }} sessions confirmed">{{ week_snapshot.progress_percent }}%</progress>
+    </div>
+    <div class="week-signal-grid">
+      <div><small>Distance</small><strong>{{ week_snapshot.distance_km|number }} km</strong><span>imported this week</span></div>
+      <div><small>Recent Normal</small><strong>{{ week_snapshot.recent_week_average_km|number }} km</strong><span>4-week average</span></div>
+      <div><small>Last Run</small><strong>{{ week_snapshot.last_run_label }}</strong><span>{{ week_snapshot.sessions_remaining }} session{{ '' if week_snapshot.sessions_remaining == 1 else 's' }} left</span></div>
+    </div>
+  </div>
+  <div class="week-guidance"><p>{{ week_snapshot.guidance }}</p>{% if latest %}<a href="/activity/{{ latest[0].id }}#recovery-checkin">Log Recovery <span aria-hidden="true">→</span></a>{% endif %}</div>
+</section>
+
+<section class="card goal-progress-card reveal">
+  {% if goal_progress %}
+  <div class="goal-progress-head">
+    <div><p class="eyebrow">Your {{ goal_progress.target_km|number(0) }} km path</p><h2>Comfort Before Distance.</h2></div>
+    <strong class="goal-progress-percent">{{ goal_progress.percent }}%</strong>
+  </div>
+  <progress class="goal-progress" max="100" value="{{ goal_progress.percent }}" aria-label="{{ goal_progress.percent }} percent of the {{ goal_progress.target_km|number(0) }} kilometre distance reached">{{ goal_progress.percent }}%</progress>
+  <div class="goal-progress-stats">
+    <div><strong>{{ goal_progress.longest_km|number }} km</strong><span>longest recorded session</span></div>
+    <div><strong>{{ goal_progress.remaining_km|number }} km</strong><span>{{ 'goal distance reached' if goal_progress.remaining_km == 0 else 'distance left to build' }}</span></div>
+  </div>
+  <div class="goal-progress-foot"><p>Not a deadline. Increase only when the current distance feels comfortable.</p><a href="/plan">Open 4-Week Plan <span aria-hidden="true">→</span></a></div>
+  {% else %}
+  <p class="eyebrow">Your current focus</p>
+  <h2>{{ training_goal_label }}</h2>
+  <p class="muted">Keep the next step repeatable and use walking before fatigue changes your form.</p>
+  <a class="quiet-link" href="/plan">Open Your 4-Week Plan <span aria-hidden="true">→</span></a>
+  {% endif %}
+</section>
+
+<section class="two-col dashboard-flow">
+  <section class="card training-load-card reveal">
+    <div class="section-head"><div><p class="eyebrow">Six-week view</p><h2>Training Load</h2></div><span class="badge {{ 'easy' if consistency.score >= 75 else 'moderate' }}">{{ consistency.score }}/100</span></div>
+    <div class="load-bars" role="img" aria-label="Weekly distance for the last six calendar weeks">
+      {% for week in load_weeks %}
+      <div class="load-column {{ 'current' if week.is_current else '' }}">
+        <span>{{ week.distance_km|number }}</span>
+        <div class="load-track"><i style="--load-height: {{ week.height_percent }}%"></i></div>
+        <small>{{ week.label }}</small>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="load-legend"><span><i></i> distance in km</span><strong>{{ week_snapshot.recent_week_average_km|number }} km recent weekly average</strong></div>
+  </section>
+  <section class="dashboard-latest">
+    <div class="section-head"><div><p class="eyebrow">Your rhythm</p><h2>Recent Runs</h2></div><a class="quiet-link" href="/activities">See All</a></div>
+    <div class="run-timeline">
+      {% for activity in latest %}
+      <a class="run-timeline-item reveal" href="/activity/{{ activity.id }}">
+        <span class="run-timeline-marker" aria-hidden="true"></span>
+        <div class="run-timeline-content">
+          <div class="run-timeline-top"><div><small>{{ activity._date }} · {{ activity.day_of_week }}</small><h3>{{ activity.name or 'Run' }}</h3></div><strong>{{ activity.distance_km|number }}<small>km</small></strong></div>
+          <div class="run-timeline-signals"><span>{{ activity.moving_time_sec|duration }}</span><span>{{ activity.pace_min_per_km or '—' }} /km</span><span>{{ activity.estimated_walk_break_count if activity.estimated_walk_break_count is not none else '—' }} walks</span></div>
+          <div class="run-timeline-foot"><span class="badge {{ activity.effort_guess }}">{{ activity.session_type_guess|replace('_', ' ') }}</span><span>{{ 'Run/walk detected' if activity.run_walk_detected else 'Continuous running signal' }}</span></div>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </section>
 </section>
 {% endif %}
 {% endblock %}
-

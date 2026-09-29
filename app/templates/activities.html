@@ -1,21 +1,33 @@
 {% extends "base.html" %}
 {% block title %}Runs · Runstead{% endblock %}
 {% block content %}
-<header class="page-intro"><p class="eyebrow">2026 timeline</p><h1>Your runs.</h1><p class="muted">Every session counts—including the ones with walking.</p></header>
+<header class="page-intro editorial-intro"><p class="eyebrow">{{ current_year }} field log</p><h1>Every run.<br>Every return.</h1><p class="muted">Walking included. Progress is the work you can repeat.</p></header>
+<form action="/activities" method="get" class="search-bar reveal">
+  <label class="sr-only" for="activity-search">Search runs</label>
+  <input id="activity-search" name="q" type="search" value="{{ query }}" placeholder="Search name, date, type…">
+  <button class="primary" type="submit">Search</button>
+</form>
+<p class="muted result-count">{{ total_results }} matching run{{ '' if total_results == 1 else 's' }}</p>
 {% if not activities %}
-<div class="card stack reveal"><h2>No runs yet</h2><p class="muted">Import your archive to build your timeline.</p><a class="button" href="/import">Import Strava ZIP</a></div>
+<div class="card stack reveal"><h2>No matching runs</h2><p class="muted">Try a shorter search or import your archive.</p><a class="button" href="/import">Import data</a></div>
 {% else %}
 <div class="stack">
 {% for activity in activities %}
-  <a class="card activity-card reveal" href="/activity/{{ activity.id }}">
+  <a class="card activity-card run-log-card reveal" href="/activity/{{ activity.id }}">
     <div class="activity-top">
       <div><p class="eyebrow">{{ activity._date }}</p><h3>{{ activity.name or 'Run' }}</h3><span class="muted">{{ activity.day_of_week }} · {{ activity.sport_type }}</span></div>
       <span class="badge {{ 'warn' if activity.injury_risk_flag else activity.effort_guess }}">{{ activity.session_type_guess|replace('_', ' ') }}</span>
     </div>
-    <div class="facts"><span><strong>{{ activity.distance_km|number }}</strong> km</span><span>{{ activity.moving_time_sec|duration }}</span><span>{{ activity.pace_min_per_km or '—' }} /km</span><span>{{ activity.estimated_walk_break_count if activity.estimated_walk_break_count is not none else '—' }} walk breaks</span><span>HR {{ activity.average_heartrate|number(0) if activity.average_heartrate is not none else '—' }}</span></div>
+    <div class="facts"><span><strong>{{ activity.distance_km|number }}</strong> km</span><span>{{ activity.moving_time_sec|duration }}</span><span>{{ activity.pace_min_per_km or '—' }} /km</span><span>{{ activity.estimated_walk_break_count if activity.estimated_walk_break_count is not none else '—' }} walk breaks</span><span>HR {{ activity.average_heartrate|number(0) if activity.average_heartrate is not none else '—' }}</span>{% if activity.perceived_effort is not none %}<span>Felt {{ activity.perceived_effort }}/10</span>{% endif %}</div>
   </a>
 {% endfor %}
 </div>
+{% if total_pages > 1 %}
+<nav class="pagination" aria-label="Activity pages">
+  {% if page_number > 1 %}<a class="button secondary" href="/activities?q={{ query|urlencode }}&page={{ page_number - 1 }}">Previous</a>{% endif %}
+  <span class="muted">Page {{ page_number }} of {{ total_pages }}</span>
+  {% if page_number < total_pages %}<a class="button secondary" href="/activities?q={{ query|urlencode }}&page={{ page_number + 1 }}">Next</a>{% endif %}
+</nav>
+{% endif %}
 {% endif %}
 {% endblock %}
-

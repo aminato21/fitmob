@@ -1,18 +1,36 @@
 {% extends "base.html" %}
 {% block title %}Import · Runstead{% endblock %}
 {% block content %}
-<header class="page-intro"><p class="eyebrow">Private local import</p><h1>Drop in your Strava ZIP.</h1><p class="muted">FIT, GPX, TCX, and activities.csv are processed on this computer.</p></header>
+<header class="page-intro editorial-intro"><p class="eyebrow">Private data desk</p><h1>Bring the<br>signals together.</h1><p class="muted">Runs from Strava. Recovery from Apple Health. Your raw data stays yours.</p></header>
 {% if error %}<div class="notice danger reveal"><strong>Import did not finish</strong><p>{{ error }}</p></div>{% endif %}
-{% if result %}<div class="notice reveal"><strong>Import complete</strong><p>{{ result.activities_imported }} new · {{ result.activities_updated }} updated · {{ result.runs }} total runs</p></div>{% endif %}
-<form action="/import" method="post" enctype="multipart/form-data" class="stack" data-loading-form>
-  <label class="dropzone reveal" for="archive" data-dropzone>
-    <span class="drop-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M12 16V4m-4 4 4-4 4 4M5 20h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-    <strong style="font-size:1.15rem">Choose or drop your archive</strong>
-    <span class="muted" data-file-label>Strava account export · .zip</span>
-    <input id="archive" name="archive" type="file" accept=".zip,application/zip" required data-file-input>
-  </label>
-  <button class="primary" type="submit" data-loading-text="Importing runs…">Import and rebuild analysis</button>
-</form>
-<section class="card reveal"><p class="eyebrow">Find the file</p><h2>Strava → Settings → My Account</h2><ol><li>Choose Download your account.</li><li>Request the archive.</li><li>Download the ZIP from Strava’s email.</li><li>Upload it here without extracting it.</li></ol></section>
-{% endblock %}
+{% if result %}<div class="notice reveal"><strong>Strava import complete</strong><p>{{ result.activities_imported }} new · {{ result.activities_updated }} updated · {{ result.runs }} total runs</p><a class="button" href="/plan/matches">Review completed sessions</a><p>Nothing is marked complete automatically. Your current plan stays saved until you accept a replacement.</p><a href="/plan">Review a refreshed plan</a></div>{% endif %}
+{% if health_result %}<div class="notice reveal"><strong>Apple Health enrichment complete</strong><p>{{ health_result.daily_records_saved }} daily summaries saved · {{ health_result.activities_enriched }} runs enriched with heart rate.</p></div>{% endif %}
 
+<section class="card stack import-source-card strava-source reveal">
+  <div><p class="eyebrow">1 · Running activities</p><h2>Strava account archive</h2><p class="muted">Imports FIT, GPX, TCX, splits, laps and activity streams.</p></div>
+  <form action="/import" method="post" enctype="multipart/form-data" class="stack" data-loading-form><input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <label class="dropzone" for="archive" data-dropzone>
+      <span class="drop-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M12 16V4m-4 4 4-4 4 4M5 20h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      <strong style="font-size:1.15rem">Choose or drop your archive</strong>
+      <span class="muted" data-file-label>Strava account export · .zip</span>
+      <input id="archive" name="archive" type="file" accept=".zip,application/zip" required data-file-input>
+    </label>
+    <button class="primary" type="submit" data-loading-text="Importing runs…">Import and rebuild analysis</button>
+  </form>
+</section>
+
+<section class="card stack import-source-card health-source reveal">
+  <div><p class="eyebrow">2 · Recovery context</p><h2>Apple Health export</h2><p class="muted">Adds sleep, resting heart rate, steps and matching workout HR aggregates. Raw samples are not sent to Gemini.</p></div>
+  <form action="/import/apple-health" method="post" enctype="multipart/form-data" class="stack" data-loading-form><input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <label class="dropzone compact" for="health-archive" data-dropzone>
+      <span class="drop-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M12 21s-8-4.6-8-11a4.5 4.5 0 0 1 8-2.7A4.5 4.5 0 0 1 20 10c0 6.4-8 11-8 11Z" stroke="currentColor" stroke-width="2"/></svg></span>
+      <strong>Choose Apple Health export.zip</strong>
+      <span class="muted" data-file-label>Health → profile → Export All Health Data</span>
+      <input id="health-archive" name="archive" type="file" accept=".zip,application/zip" required data-file-input>
+    </label>
+    <button class="primary" type="submit" data-loading-text="Reading health data…">Add recovery context</button>
+  </form>
+</section>
+
+<section class="card reveal"><p class="eyebrow">Where to export</p><h2>Keep the original ZIP files</h2><ol><li>Strava: Settings → My Account → Download your account.</li><li>Apple Health: profile picture → Export All Health Data.</li><li>Upload each ZIP in its matching section above without extracting it.</li></ol></section>
+{% endblock %}

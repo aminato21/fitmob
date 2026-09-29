@@ -1,19 +1,39 @@
 {% extends "base.html" %}
 {% block title %}Settings · Runstead{% endblock %}
 {% block content %}
-<header class="page-intro"><p class="eyebrow">Local preferences</p><h1>Make it yours.</h1><p class="muted">Training preferences save locally in SQLite. Secrets stay in .env and never appear here.</p></header>
-{% if saved %}<div class="notice reveal"><strong>Preferences saved.</strong><p>Your next deterministic or Gemini plan will use them.</p></div>{% endif %}
-<form action="/settings" method="post" class="card stack reveal">
-  <div><label for="preferred_sessions_per_week">Sessions per week</label><select id="preferred_sessions_per_week" name="preferred_sessions_per_week">{% for value in [1,2,3] %}<option value="{{ value }}" {{ 'selected' if sessions_per_week == value else '' }}>{{ value }} session{{ 's' if value != 1 else '' }}</option>{% endfor %}</select><p class="muted">Two is the normal work-week default. One is valid when busy; three suits a free week.</p></div>
-  <div><label for="training_goal">Current goal</label><select id="training_goal" name="training_goal"><option value="continuous_5k" {{ 'selected' if training_goal == 'continuous_5k' else '' }}>Run 5 km continuously</option><option value="fewer_walk_breaks" {{ 'selected' if training_goal == 'fewer_walk_breaks' else '' }}>Use fewer walking breaks</option><option value="comfortable_7k" {{ 'selected' if training_goal == 'comfortable_7k' else '' }}>Complete 7 km more comfortably</option><option value="consistency" {{ 'selected' if training_goal == 'consistency' else '' }}>Build weekly consistency</option></select></div>
+<header class="page-intro editorial-intro"><p class="eyebrow">Your training rules</p><h1>Built around<br>your real week.</h1><p class="muted">Choose what is repeatable now. Change it when life changes.</p></header>
+{% if saved %}<div class="notice reveal"><strong>Preferences saved.</strong><p>Your active plan stays saved. Review a proposal to use the new preferences.</p><a href="/plan">Review a fresh plan</a></div>{% endif %}
+<form action="/settings" method="post" class="card stack preferences-card reveal"><input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <div><label for="preferred_sessions_per_week">Sessions per week</label><select id="preferred_sessions_per_week" name="preferred_sessions_per_week">{% for value in [1,2,3] %}<option value="{{ value }}" {{ 'selected' if sessions_per_week == value else '' }}>{{ value }} session{{ 's' if value != 1 else '' }}</option>{% endfor %}</select><p class="muted">One is your starting target. Choose between one and three sessions as your routine changes.</p></div>
+  <div>
+    <label for="training_goal">Current goal</label>
+    <select id="training_goal" name="training_goal">
+      <option value="continuous_5k" {{ 'selected' if training_goal == 'continuous_5k' else '' }}>Run 5 km continuously</option>
+      <option value="fewer_walk_breaks" {{ 'selected' if training_goal == 'fewer_walk_breaks' else '' }}>Use fewer walking breaks</option>
+      <option value="longer_continuous_segments" {{ 'selected' if training_goal == 'longer_continuous_segments' else '' }}>Run longer before each walk break</option>
+      <option value="comfortable_7k" {{ 'selected' if training_goal == 'comfortable_7k' else '' }}>Complete 7 km comfortably</option>
+      <option value="comfortable_10k" {{ 'selected' if training_goal == 'comfortable_10k' else '' }}>Build toward a comfortable 10 km run/walk</option>
+      <option value="build_endurance" {{ 'selected' if training_goal == 'build_endurance' else '' }}>Build easy endurance</option>
+      <option value="consistency" {{ 'selected' if training_goal == 'consistency' else '' }}>Build weekly consistency</option>
+    </select>
+    <p class="muted">Saving preferences keeps your active plan. Generate and review a replacement to use your new goal or frequency.</p>
+  </div>
+  <div><label for="max_hr">Maximum heart rate (optional)</label><input id="max_hr" name="max_hr" type="number" min="100" max="240" value="{{ max_hr or '' }}" placeholder="Leave blank unless you know it"><p class="muted">Runstead never estimates this from age.</p></div>
+  <div><label for="hr_zone_bounds">Five HR zone upper bounds (optional)</label><input id="hr_zone_bounds" name="hr_zone_bounds" type="text" value="{{ hr_zones|join(',') if hr_zones else '' }}" placeholder="Example: 120,140,155,170,190"><p class="muted">Must be five increasing values. Leave blank to keep zone analysis disabled.</p></div>
   <button class="primary" type="submit">Save training preferences</button>
 </form>
-<section class="card reveal"><div class="settings-list">
+<section class="card data-hub reveal">
+  <div><p class="eyebrow">Data & devices</p><h2>Bring In New Signals.</h2><p class="muted">Import is occasional maintenance, so it lives here instead of the main navigation.</p></div>
+  <div class="data-hub-actions">
+    <a href="/import"><span class="data-hub-icon">↓</span><div><strong>Import Health Data</strong><small>Strava ZIP or Apple Health export</small></div><b aria-hidden="true">→</b></a>
+    <a href="/api/backup"><span class="data-hub-icon">↗</span><div><strong>Download Private Backup</strong><small>SQLite database and exported files</small></div><b aria-hidden="true">→</b></a>
+  </div>
+</section>
+<details class="card plan-controls reveal"><summary><span>Privacy & technical details</span><small>AI, storage, exports and API</small></summary><div class="settings-list plan-control-body">
   <div class="setting-row"><span class="setting-icon">AI</span><div><strong>Coach provider</strong><div class="muted">{{ ai_provider }} · {{ ai_model }}</div></div><span class="setting-value">{{ 'key ready' if key_configured else 'local only' }}</span></div>
-  <div class="setting-row"><span class="setting-icon">DB</span><div><strong>Activity database</strong><div class="muted">SQLite, stored locally</div></div><span class="setting-value">{{ database_path }}</span></div>
+  <div class="setting-row"><span class="setting-icon">DB</span><div><strong>Activity database</strong><div class="muted">SQLite storage</div></div><span class="setting-value">{{ database_path }}</span></div>
   <div class="setting-row"><span class="setting-icon">↗</span><div><strong>Exports</strong><div class="muted">CSV and JSON output folder</div></div><span class="setting-value">{{ export_dir }}</span></div>
-  <div class="setting-row"><span class="setting-icon">♥</span><div><strong>Heart-rate zones</strong><div class="muted">Never medically guessed</div></div><span class="setting-value">{{ max_hr or 'not configured' }}</span></div>
-</div></section>
-<a class="button secondary full" href="/docs">Open API documentation</a>
+  <div class="setting-row"><span class="setting-icon">♥</span><div><strong>Heart-rate zones</strong><div class="muted">Never medically guessed</div></div><span class="setting-value">{{ ('max ' ~ max_hr ~ ' bpm') if max_hr else 'not configured' }}</span></div>
+</div><a class="button secondary full" href="/docs">Open API documentation</a></details>
+<form action="/logout" method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="button secondary full" type="submit">Sign Out</button></form>
 {% endblock %}
-

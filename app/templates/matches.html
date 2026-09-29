@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Confirm sessions · Runstead{% endblock %}
+{% block content %}
+<header class="page-intro compact-intro"><p class="eyebrow">Imported runs only</p><h1>Confirm your sessions.</h1><p>Choose which imported run completed each session. Uploads never advance the plan automatically.</p></header>
+{% if request.query_params.get('matched') %}<div class="notice"><strong>Completion confirmed.</strong><p>Your next unfinished session is now shown on Home and Plan.</p></div>{% endif %}
+<a href="/plan">Back to plan</a> · <a href="/import">Import another ZIP</a>
+{% for session in plan_sessions if not session.activity_id %}
+<section class="card stack"><h2>Session {{ session.position }} · {{ session.session_type|replace('_',' ') }}</h2><p>{{ session.target_distance_km|number }} km ceiling · {{ session.walk_strategy }}</p>
+{% if activities %}<form action="/plan/sessions/{{ session.id }}/match" method="post" class="stack"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><label for="run-{{ session.id }}">Imported run</label><select name="activity_id" id="run-{{ session.id }}" required><option value="">Choose a run…</option>{% for activity in activities %}<option value="{{ activity.id }}">{{ activity.start_date_local[:10] }} · {{ (activity.distance_m / 1000)|number if activity.distance_m else '—' }} km · {{ activity.name or 'Run' }}</option>{% endfor %}</select><button class="primary">Confirm completion</button></form>{% else %}<p>No unlinked imported runs. Upload your latest archive.</p>{% endif %}</section>
+{% endfor %}
+<section class="card stack"><h2>Confirmed history</h2>{% for session in completed_history %}<div><p>Plan {{ session.plan_id }} · Session {{ session.position }} · <a href="/activity/{{ session.activity_id }}">View run</a></p><form action="/plan/sessions/{{ session.id }}/unmatch" method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="button secondary">Undo link</button></form></div>{% else %}<p>No sessions confirmed yet.</p>{% endfor %}</section>
+{% endblock %}

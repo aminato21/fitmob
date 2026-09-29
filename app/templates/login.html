@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#080c0e">
+  <title>Sign In · Runstead</title>
+  <link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+  <link rel="stylesheet" href="/static/app.css">
+  <script>
+    const initialTheme = localStorage.getItem("runstead-theme") || "dark";
+    document.documentElement.dataset.theme = initialTheme;
+    document.querySelector('meta[name="theme-color"]').content = initialTheme === "light" ? "#eeeae0" : "#080c0e";
+  </script>
+</head>
+<body>
+  <main class="auth-shell">
+    <section class="card auth-card">
+      <div class="brand auth-brand">
+        <span class="brand-mark" aria-hidden="true">↗</span>
+        Runstead
+      </div>
+      <p class="eyebrow">Private Training Space</p>
+      <h1>Welcome back.</h1>
+      <p class="muted">Sign in to view your running and health information.</p>
+      {% if error %}
+      <div class="notice danger" role="alert">{{ error }}</div>
+      {% endif %}
+      <form action="/login" method="post" class="stack"><input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <input type="hidden" name="next_path" value="{{ next_path }}">
+        <div>
+          <label for="username">Username</label>
+          <input id="username" name="username" type="text" autocomplete="username" required>
+        </div>
+        <div>
+          <label for="password">Password</label>
+          <input id="password" name="password" type="password" autocomplete="current-password" required>
+        </div>
+        <button class="primary" type="submit">Sign In</button>
+      </form>
+    </section>
+  </main>
+</body>
+</html>

@@ -1,17 +1,18 @@
 {% extends "base.html" %}
 {% block title %}Insights · Runstead{% endblock %}
 {% block content %}
-<header class="page-intro"><p class="eyebrow">Conservative coach</p><h1>Progress, decoded.</h1><p class="muted">Rules first. Gemini optional. Private routes never leave this computer.</p></header>
+<p><a href="/coach">Ask your coach a question →</a></p><header class="page-intro editorial-intro"><p class="eyebrow">Your running signal</p><h1>Progress,<br>decoded.</h1><p class="muted">Your effort first. Private routes and raw health samples stay private.</p></header>
 {% if result %}<div class="notice reveal"><strong>{{ 'Gemini analysis complete' if result.provider_used == 'gemini' else 'Deterministic analysis used' }}</strong><p>Provider: {{ result.provider_used }}{% if result.model %} · {{ result.model }}{% endif %}{% if result.fallback_reason %} · {{ result.fallback_reason }}{% endif %}</p></div>{% endif %}
+{% if result and result.safety_adjustments %}<div class="notice warn reveal"><strong>Local safety guardrails adjusted the AI schedule.</strong><p>{{ result.safety_adjustments|join(' · ') }}</p></div>{% endif %}
 
-<form action="/analysis/run" method="post" class="card stack shimmer reveal" data-loading-form>
+<form action="/analysis/run" method="post" class="card stack shimmer coach-console reveal" data-loading-form><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="request_id" value="{{ request_id }}">
   <div class="activity-top"><div><p class="eyebrow">{{ run_count }} runs ready</p><h2>Refresh your analysis</h2><p class="muted">{{ sessions_per_week }} session(s)/week · {{ training_goal|replace('_',' ') }} · {{ ai_provider }} / {{ ai_model }}</p></div><span class="badge easy">GPS-safe</span></div>
-  {% if ai_provider == 'gemini' and not key_configured %}<p class="notice warn">Gemini has no key, so the strong deterministic plan will be used.</p>{% endif %}
-  <button class="primary" type="submit" data-loading-text="Analyzing safely…">Build fresh insights</button>
+  {% if ai_provider == 'gemini' and not key_configured %}<p class="notice warn">Gemini has no key, so the deterministic plan will be used.</p>{% endif %}
+  <button class="primary" type="submit" data-loading-text="Analyzing safely…">Generate a plan for review</button>
 </form>
 
 {% set shown = result.analysis if result else deterministic %}
-<section class="card hero reveal"><p class="eyebrow">Current level</p><h2>{{ shown.current_level }}</h2><p>{{ shown.walk_break_analysis }}</p></section>
+<section class="card hero level-card reveal"><p class="eyebrow">Current level</p><h2>{{ shown.current_level }}</h2><p>{{ shown.walk_break_analysis }}</p></section>
 
 <section class="grid">
   <div class="card stat-card teal reveal"><strong class="stat-value">{{ consistency.score }}</strong><span class="stat-label">Consistency /100</span></div>
@@ -20,9 +21,15 @@
   <div class="card stat-card blue reveal"><strong class="stat-value">{{ walk_trend.overall_direction|replace('_',' ')|title }}</strong><span class="stat-label">Walk-break trend</span></div>
 </section>
 
+<section class="card recovery-card reveal">
+  <div class="section-head"><div><p class="eyebrow">Recovery context</p><h2>{{ recovery.interpretation|replace('_',' ')|title }}</h2></div><span class="badge {{ 'warn' if recovery.recent_recovery_flags else 'easy' }}">{{ recovery.checkins_available }} check-ins</span></div>
+  <div class="facts"><span>14-day sleep: <strong>{{ recovery.average_sleep_hours_14d|number if recovery.average_sleep_hours_14d is not none else '—' }}</strong> h</span><span>Resting HR: <strong>{{ recovery.average_resting_heartrate_14d|number(0) if recovery.average_resting_heartrate_14d is not none else '—' }}</strong></span><span>Recent flags: <strong>{{ recovery.recent_recovery_flags }}</strong></span></div>
+  <p class="muted">Recovery data provides context only. Pain and your own perceived effort always override the plan.</p>
+</section>
+
 <section class="two-col">
-  <div class="card chart-card reveal"><p class="eyebrow">Efficiency</p><h2>Pace trend</h2>{% if pace_trend %}<div class="chart-wrap"><canvas id="pace-chart" class="chart"></canvas></div><script id="pace-chart-data" type="application/json">{{ pace_trend|tojson }}</script>{% else %}<div class="chart-empty">No pace history yet.</div>{% endif %}</div>
-  <div class="card chart-card reveal"><p class="eyebrow">Run/walk</p><h2>Estimated breaks</h2>{% if walk_chart %}<div class="chart-wrap"><canvas id="walk-chart" class="chart"></canvas></div><script id="walk-chart-data" type="application/json">{{ walk_chart|tojson }}</script>{% else %}<div class="chart-empty">Streams are needed for walk-break trends.</div>{% endif %}</div>
+  <div class="card chart-card reveal"><p class="eyebrow">Efficiency</p><h2>Pace trend</h2>{% if pace_trend %}<div class="chart-wrap"><canvas id="pace-chart" class="chart" role="img" aria-label="Pace trend in minutes per kilometre. Tap a point for its exact value.">Pace trend chart</canvas></div><script id="pace-chart-data" type="application/json">{{ pace_trend|tojson }}</script>{% else %}<div class="chart-empty">No pace history yet.</div>{% endif %}</div>
+  <div class="card chart-card reveal"><p class="eyebrow">Run/walk</p><h2>Estimated breaks</h2>{% if walk_chart %}<div class="chart-wrap"><canvas id="walk-chart" class="chart" role="img" aria-label="Estimated walking-break trend. Tap a point for its exact value.">Walking-break trend chart</canvas></div><script id="walk-chart-data" type="application/json">{{ walk_chart|tojson }}</script>{% else %}<div class="chart-empty">Streams are needed for walk-break trends.</div>{% endif %}</div>
 </section>
 
 <section class="two-col">
