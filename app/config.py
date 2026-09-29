@@ -22,12 +22,14 @@ class Settings(BaseSettings):
     ai_provider: str = "none"
     gemini_api_key: str = ""
     ai_model: str = "gemini-3.5-flash"
-    ai_fallback_model: str = "gemini-2.5-flash"
     ai_user_context: str = (
         "Beginner run/walk runner; prioritize consistency and injury prevention."
     )
-    preferred_sessions_per_week: int = 2
-    training_goal: str = "continuous_5k"
+    preferred_sessions_per_week: int = 1
+    training_goal: str = "consistency"
+
+    auth_enabled: bool = False
+    auth_secret_key: str = ""
 
     max_hr: int | None = None
     hr_zone_bounds: list[int] | None = None
@@ -76,7 +78,15 @@ class Settings(BaseSettings):
     @classmethod
     def validate_training_goal(cls, value: str) -> str:
         normalized = value.lower().strip()
-        allowed = {"continuous_5k", "fewer_walk_breaks", "comfortable_7k", "consistency"}
+        allowed = {
+            "continuous_5k",
+            "fewer_walk_breaks",
+            "longer_continuous_segments",
+            "comfortable_7k",
+            "comfortable_10k",
+            "build_endurance",
+            "consistency",
+        }
         if normalized not in allowed:
             raise ValueError(f"TRAINING_GOAL must be one of {sorted(allowed)}")
         return normalized
@@ -86,6 +96,15 @@ class Settings(BaseSettings):
             raise RuntimeError(
                 "STRAVA_CLIENT_ID and STRAVA_CLIENT_SECRET must be set in .env"
             )
+
+    def with_preferences(self, preferences: dict[str, object]) -> "Settings":
+        """Apply safe, locally stored analysis preferences."""
+        updates: dict[str, object] = {}
+        if "max_hr" in preferences:
+            updates["max_hr"] = preferences["max_hr"]
+        if "hr_zone_bounds" in preferences:
+            updates["hr_zone_bounds"] = preferences["hr_zone_bounds"]
+        return self.model_copy(update=updates)
 
 
 @lru_cache

@@ -7,13 +7,14 @@ import json
 from app.ai import list_gemini_models, run_ai_analysis
 from app.config import get_settings
 from app.db import Database
+from app.health_import import import_apple_health_zip
 from app.offline_import import import_strava_zip
 from app.sync import export_from_database, sync_activities
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Sync and export 2026 Strava running activities"
+        description="Sync and export Strava running activities"
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
     sync_parser = subparsers.add_parser("sync", help="Fetch new runs and export")
@@ -36,6 +37,11 @@ def build_parser() -> argparse.ArgumentParser:
         "import-zip", help="Import a Strava account export ZIP without the API"
     )
     import_parser.add_argument("zip_path", help="Path to the Strava ZIP file")
+    health_parser = subparsers.add_parser(
+        "import-health",
+        help="Import an Apple Health export ZIP for recovery enrichment",
+    )
+    health_parser.add_argument("zip_path", help="Path to Apple Health export.zip")
     return parser
 
 
@@ -56,6 +62,12 @@ def main() -> None:
     elif args.command == "import-zip":
         try:
             result = import_strava_zip(args.zip_path, settings, database)
+        except ValueError as exc:
+            parser.error(str(exc))
+    elif args.command == "import-health":
+        try:
+            result = import_apple_health_zip(args.zip_path, database)
+            result["exports"] = export_from_database(settings, database)
         except ValueError as exc:
             parser.error(str(exc))
     else:

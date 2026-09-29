@@ -31,7 +31,8 @@ async def sync_activities(
             activity
             for activity in summaries
             if (activity.get("sport_type") or activity.get("type")) in RUN_TYPES
-            and str(activity.get("start_date_local", "")).startswith("2026-")
+            and str(activity.get("start_date_local", ""))[:4].isdigit()
+            and int(str(activity.get("start_date_local", ""))[:4]) >= 2026
         ]
         fetched = 0
         skipped = 0
@@ -45,7 +46,10 @@ async def sync_activities(
             laps = await client.activity_laps(activity_id)
             database.upsert_activity(detail, streams, laps)
             fetched += 1
-        exports = export_all(database.all_activities(), settings)
+        exports = export_all(
+            database.all_activities(),
+            settings.with_preferences(database.get_preferences()),
+        )
         return {
             "status": "ok",
             "strava_running_activities_seen": len(candidates),
@@ -60,4 +64,7 @@ async def sync_activities(
 
 def export_from_database(settings: Settings, database: Database) -> dict[str, Any]:
     database.initialize()
-    return export_all(database.all_activities(), settings)
+    return export_all(
+        database.all_activities(),
+        settings.with_preferences(database.get_preferences()),
+    )

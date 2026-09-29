@@ -40,14 +40,15 @@ class StravaClient:
 
     def authorization_url(self, state: str) -> str:
         self.settings.require_strava_credentials()
-        return f"{AUTHORIZE_URL}?{urlencode({
-            'client_id': self.settings.strava_client_id,
-            'redirect_uri': self.settings.strava_redirect_uri,
-            'response_type': 'code',
-            'approval_prompt': 'auto',
-            'scope': 'activity:read_all',
-            'state': state,
-        })}"
+        params = {
+            "client_id": self.settings.strava_client_id,
+            "redirect_uri": self.settings.strava_redirect_uri,
+            "response_type": "code",
+            "approval_prompt": "auto",
+            "scope": "activity:read_all",
+            "state": state,
+        }
+        return f"{AUTHORIZE_URL}?{urlencode(params)}"
 
     async def exchange_code(self, code: str, granted_scope: str) -> dict[str, Any]:
         if "activity:read_all" not in {

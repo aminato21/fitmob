@@ -246,6 +246,9 @@ def build_run_rows(
 
     for record in sorted(records, key=lambda item: item["detail"]["start_date_local"]):
         detail = record["detail"]
+        health = record.get("health") or {}
+        daily_health = record.get("daily_health") or {}
+        checkin = record.get("checkin") or {}
         activity_id = int(detail["id"])
         local_dt = parse_local(detail["start_date_local"])
         iso = local_dt.isocalendar()
@@ -258,6 +261,11 @@ def build_run_rows(
         max_speed = number(detail.get("max_speed"))
         elevation = number(detail.get("total_elevation_gain"))
         avg_hr = number(detail.get("average_heartrate"))
+        if avg_hr is None:
+            avg_hr = number(health.get("average_heartrate"))
+        max_hr_value = number(detail.get("max_heartrate"))
+        if max_hr_value is None:
+            max_hr_value = number(health.get("max_heartrate"))
         gear = detail.get("gear") if isinstance(detail.get("gear"), dict) else {}
         gear_id = detail.get("gear_id")
         streams = analyze_streams(record.get("streams"), settings)
@@ -291,9 +299,19 @@ def build_run_rows(
             "elev_high_m": number(detail.get("elev_high")),
             "elev_low_m": number(detail.get("elev_low")),
             "elevation_per_km": safe_div(elevation, distance_km),
-            "has_heartrate": detail.get("has_heartrate"),
+            "has_heartrate": bool(
+                detail.get("has_heartrate") or avg_hr is not None
+            ),
             "average_heartrate": avg_hr,
-            "max_heartrate": number(detail.get("max_heartrate")),
+            "max_heartrate": max_hr_value,
+            "heart_rate_source": (
+                "strava_activity"
+                if detail.get("average_heartrate") is not None
+                else "apple_health"
+                if avg_hr is not None
+                else None
+            ),
+            "heart_rate_sample_count": health.get("sample_count"),
             "hr_efficiency_index": safe_div(
                 avg_hr, avg_speed * 3.6 if avg_speed is not None else None
             ),
@@ -341,6 +359,27 @@ def build_run_rows(
             "longest_continuous_run_estimate_sec": streams[
                 "longest_continuous_run_estimate_sec"
             ],
+            "sleep_duration_sec": number(daily_health.get("sleep_duration_sec")),
+            "resting_heartrate": number(
+                daily_health.get("resting_heartrate")
+            ),
+            "daily_steps": number(daily_health.get("steps")),
+            "perceived_effort": checkin.get("perceived_effort"),
+            "soreness": checkin.get("soreness"),
+            "pain_reported": (
+                bool(checkin.get("pain")) if checkin else None
+            ),
+            "sleep_quality": checkin.get("sleep_quality"),
+            "energy_level": checkin.get("energy_level"),
+            "followed_walk_strategy": (
+                bool(checkin.get("followed_walk_strategy"))
+                if checkin.get("followed_walk_strategy") is not None
+                else None
+            ),
+            "unrecorded_walk_minutes": checkin.get(
+                "unrecorded_walk_minutes"
+            ),
+            "checkin_notes": checkin.get("notes"),
             "notes": detail.get("description"),
         }
         rows.append(row)
@@ -505,9 +544,22 @@ def _add_contextual_metrics(rows: list[dict[str, Any]], settings: Settings) -> N
         row["too_many_hard_sessions_flag"] = (
             hard_count > settings.max_hard_sessions_7d
         )
+        row["recovery_flag"] = bool(
+            row.get("pain_reported")
+            or (row.get("soreness") or 0) >= 7
+            or (
+                row.get("energy_level") is not None
+                and row["energy_level"] <= 2
+            )
+            or (
+                row.get("sleep_quality") is not None
+                and row["sleep_quality"] <= 2
+            )
+        )
         row["injury_risk_flag"] = bool(
             row["sudden_volume_increase_flag"]
             or row["too_many_hard_sessions_flag"]
+            or row["recovery_flag"]
         )
         if row["injury_risk_flag"] or row["effort_guess"] == "hard":
             row["suggested_next_session_type"] = "recovery_walk"
@@ -522,6 +574,71 @@ def _add_contextual_metrics(rows: list[dict[str, Any]], settings: Settings) -> N
             row["beginner_notes"] = (
                 "A conservative classification; use comfort and symptoms over the label."
             )
+
+
+def compute_recovery_summary(
+    rows: list[dict[str, Any]], daily_health: list[dict[str, Any]] | None = None
+) -> dict[str, Any]:
+    """Summarize recovery inputs without diagnosing or inventing readiness."""
+    daily_health = daily_health or []
+    recent_daily = daily_health[-14:]
+    sleep_values = [
+        float(item["sleep_duration_sec"]) / 3600
+        for item in recent_daily
+        if item.get("sleep_duration_sec")
+    ]
+    resting_values = [
+        float(item["resting_heartrate"])
+        for item in recent_daily
+        if item.get("resting_heartrate")
+    ]
+    checkins = [row for row in rows[-10:] if row.get("perceived_effort") is not None]
+    latest = checkins[-1] if checkins else None
+    flags = [
+        row
+        for row in rows[-5:]
+        if row.get("pain_reported")
+        or (row.get("soreness") or 0) >= 7
+        or row.get("recovery_flag")
+    ]
+    return {
+        "days_with_health_data": len(recent_daily),
+        "average_sleep_hours_14d": (
+            round(statistics.mean(sleep_values), 2) if sleep_values else None
+        ),
+        "average_resting_heartrate_14d": (
+            round(statistics.mean(resting_values), 1)
+            if resting_values
+            else None
+        ),
+        "checkins_available": len(checkins),
+        "latest_checkin": (
+            {
+                "date": latest["_date"].isoformat(),
+                "perceived_effort": latest.get("perceived_effort"),
+                "soreness": latest.get("soreness"),
+                "pain_reported": latest.get("pain_reported"),
+                "sleep_quality": latest.get("sleep_quality"),
+                "energy_level": latest.get("energy_level"),
+                "followed_walk_strategy": latest.get(
+                    "followed_walk_strategy"
+                ),
+                "unrecorded_walk_minutes": latest.get(
+                    "unrecorded_walk_minutes"
+                ),
+            }
+            if latest
+            else None
+        ),
+        "recent_recovery_flags": len(flags),
+        "interpretation": (
+            "recovery_attention"
+            if flags
+            else "no_subjective_warning"
+            if checkins
+            else "not_enough_subjective_data"
+        ),
+    }
 
 
 def public_run_row(row: dict[str, Any]) -> dict[str, Any]:
@@ -575,7 +692,7 @@ def compute_walk_break_trend(rows: list[dict[str, Any]]) -> dict[str, Any]:
     overall = (
         "improving"
         if improving > increasing
-        else "needs_attention"
+        else "increasing"
         if increasing > improving
         else "stable_or_insufficient_data"
     )
@@ -714,7 +831,9 @@ def compute_current_capabilities(rows: list[dict[str, Any]]) -> dict[str, Any]:
 
 
 def compute_consistency_score(
-    rows: list[dict[str, Any]], target_sessions_per_week: int = 2
+    rows: list[dict[str, Any]],
+    target_sessions_per_week: int = 2,
+    as_of: date | None = None,
 ) -> dict[str, Any]:
     if not rows:
         return {
@@ -725,7 +844,8 @@ def compute_consistency_score(
             "average_gap_days": None,
             "label": "no_data",
         }
-    end = rows[-1]["_date"]
+    end = as_of or date.today()
+    end = max(end, rows[-1]["_date"])
     start = max(rows[0]["_date"], end - timedelta(days=55))
     observed_weeks = max(1, math.ceil(((end - start).days + 1) / 7))
     recent = [row for row in rows if row["_date"] >= start]

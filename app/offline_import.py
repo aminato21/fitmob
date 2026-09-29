@@ -499,7 +499,7 @@ def _csv_detail(row: dict[str, Any], settings: Settings) -> dict[str, Any] | Non
             "Fallback Column Activity Date",
         )
     )
-    if sport not in RUN_TYPES or not start or start.year != 2026:
+    if sport not in RUN_TYPES or not start or start.year < 2026:
         return None
     activity_id = _as_int(
         _get(row, "Activity ID", "ID", "Fallback Column Activity ID")
@@ -706,7 +706,7 @@ def import_strava_zip(
                 date_value = _parse_datetime(parsed.detail.get("start_date_local"))
                 if (
                     not date_value
-                    or date_value.year != 2026
+                    or date_value.year < 2026
                     or parsed.detail.get("sport_type") not in RUN_TYPES
                 ):
                     skipped += 1
@@ -721,6 +721,10 @@ def import_strava_zip(
                 errors.append(f"{info.filename}: {type(exc).__name__}: {exc}")
 
     exports = export_from_database(settings, database)
+    from app.workflow import Workflow
+    workflow = Workflow(database)
+    workflow.initialize()
+    workflow.imported("strava")
     return {
         "status": "ok",
         "mode": "offline_zip",

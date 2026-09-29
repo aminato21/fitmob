@@ -33,7 +33,12 @@ RUN_FIELDS = [
     "average_run_segment_duration_sec", "longest_continuous_run_estimate_sec",
     "session_type_guess", "effort_guess", "beginner_notes",
     "suggested_next_session_type", "injury_risk_flag",
-    "sudden_volume_increase_flag", "too_many_hard_sessions_flag", "notes",
+    "sudden_volume_increase_flag", "too_many_hard_sessions_flag",
+    "recovery_flag", "heart_rate_source", "heart_rate_sample_count",
+    "sleep_duration_sec", "resting_heartrate", "daily_steps",
+    "perceived_effort", "soreness", "pain_reported", "sleep_quality",
+    "energy_level", "followed_walk_strategy", "unrecorded_walk_minutes",
+    "checkin_notes", "notes",
 ]
 
 SPLIT_FIELDS = [
@@ -133,17 +138,17 @@ def export_all(
             {"activity_id": activity_id, **stream_analyses[activity_id]}
         )
 
-    write_csv(output / "strava_2026_runs.csv", RUN_FIELDS, run_rows)
-    write_csv(output / "strava_2026_splits.csv", SPLIT_FIELDS, split_rows)
-    write_csv(output / "strava_2026_laps.csv", LAP_FIELDS, lap_rows)
+    write_csv(output / "strava_runs.csv", RUN_FIELDS, run_rows)
+    write_csv(output / "strava_splits.csv", SPLIT_FIELDS, split_rows)
+    write_csv(output / "strava_laps.csv", LAP_FIELDS, lap_rows)
     write_csv(
-        output / "strava_2026_streams_summary.csv", STREAM_FIELDS, stream_rows
+        output / "strava_streams_summary.csv", STREAM_FIELDS, stream_rows
     )
-    (output / "strava_2026_raw.json").write_text(
+    (output / "strava_raw.json").write_text(
         json.dumps(raw, ensure_ascii=False, indent=2), encoding="utf-8"
     )
     summary = make_summary(run_rows)
-    (output / "strava_2026_summary.json").write_text(
+    (output / "strava_summary.json").write_text(
         json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8"
     )
     return {"runs": len(run_rows), "files": 6, "export_dir": str(output.resolve())}
@@ -220,4 +225,3 @@ def make_summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
         "monthly_totals": dict(monthly),
         "progression_trend": progression,
     }
-
